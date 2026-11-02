@@ -10,11 +10,11 @@ import com.aivastudio.model.entity.User;
 import com.aivastudio.repository.UserRepository;
 
 @Service
-public class CurrentUserService {
+public class UserService {
 
     private final UserRepository userRepository;
 
-    public CurrentUserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 

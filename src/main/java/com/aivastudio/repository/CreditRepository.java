@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.aivastudio.model.entity.CreditMovement;
+import com.aivastudio.model.entity.Credit;
 
-public interface CreditRepository extends JpaRepository<CreditMovement, Long> {
+public interface CreditRepository extends JpaRepository<Credit, Long> {
 
-    List<CreditMovement> findAllByUser_IdOrderByCreatedAtDesc(Long userId);
+    List<Credit> findAllByUser_IdOrderByCreatedAtDesc(Long userId);
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.aivastudio.model.dto.CreditMovementResponse;
+import com.aivastudio.model.dto.CreditResponse;
 import com.aivastudio.model.dto.RechargeRequest;
 import com.aivastudio.model.dto.RechargeResponse;
 import com.aivastudio.model.dto.UserResponse;
@@ -20,11 +20,11 @@ import com.aivastudio.service.CreditService;
 
 @RestController
 @RequestMapping("/api/aiva/usuarios")
-public class AivaUserController {
+public class UserController {
 
     private final CreditService creditService;
 
-    public AivaUserController(CreditService creditService) {
+    public UserController(CreditService creditService) {
         this.creditService = creditService;
     }
 
@@ -34,7 +34,7 @@ public class AivaUserController {
     }
 
     @GetMapping("/{userId}/movimientos")
-    public List<CreditMovementResponse> listMovements(@PathVariable long userId) {
+    public List<CreditResponse> listMovements(@PathVariable long userId) {
         return creditService.listMovements(userId);
     }
 

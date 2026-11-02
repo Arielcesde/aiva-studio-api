@@ -2,7 +2,6 @@ package com.aivastudio.controller;
 
 import java.util.List;
 
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,13 +15,15 @@ import com.aivastudio.model.dto.ProjectRequest;
 import com.aivastudio.model.dto.ProjectResponse;
 import com.aivastudio.service.ProjectService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/aiva/proyectos")
-public class AivaProjectController {
+public class ProjectController {
 
     private final ProjectService projectService;
 
-    public AivaProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService) {
         this.projectService = projectService;
     }
 

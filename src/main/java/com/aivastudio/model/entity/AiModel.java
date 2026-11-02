@@ -1,8 +1,6 @@
 package com.aivastudio.model.entity;
 
 import java.math.BigDecimal;
-import java.util.List;
-
 import com.aivastudio.model.base.BaseEntity;
 
 import jakarta.persistence.AttributeOverride;

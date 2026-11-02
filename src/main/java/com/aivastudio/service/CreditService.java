@@ -7,11 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.aivastudio.exception.RecursoNoEncontradoException;
 import com.aivastudio.exception.ReglaNegocioException;
-import com.aivastudio.model.dto.CreditMovementResponse;
+import com.aivastudio.model.dto.CreditResponse;
 import com.aivastudio.model.dto.RechargeRequest;
 import com.aivastudio.model.dto.RechargeResponse;
 import com.aivastudio.model.dto.UserResponse;
-import com.aivastudio.model.entity.CreditMovement;
+import com.aivastudio.model.entity.Credit;
 import com.aivastudio.model.entity.User;
 import com.aivastudio.repository.CreditRepository;
 import com.aivastudio.repository.UserRepository;
@@ -23,17 +23,17 @@ public class CreditService {
     private static final long BONUS_THRESHOLD = 500;
     private static final long BONUS_PERCENT = 20;
 
-    private final CurrentUserService currentUserService;
+    private final UserService currentUserService;
     private final UserRepository userRepository;
-    private final CreditRepository creditMovementRepository;
+    private final CreditRepository creditRepository;
 
     public CreditService(
-            CurrentUserService currentUserService,
+            UserService currentUserService,
             UserRepository userRepository,
-            CreditRepository creditMovementRepository) {
+            CreditRepository creditRepository) {
         this.currentUserService = currentUserService;
         this.userRepository = userRepository;
-        this.creditMovementRepository = creditMovementRepository;
+        this.creditRepository = creditRepository;
     }
 
     @Transactional(readOnly = true)
@@ -42,25 +42,25 @@ public class CreditService {
     }
 
     @Transactional(readOnly = true)
-    public List<CreditMovementResponse> listMovements(long userId) {
+    public List<CreditResponse> listMovements(long userId) {
         currentUserService.requireUser(userId);
-        return creditMovementRepository.findAllByUser_IdOrderByCreatedAtDesc(userId)
+        return creditRepository.findAllByUser_IdOrderByCreatedAtDesc(userId)
                 .stream()
-                .map(CreditMovementResponse::from)
+                .map(CreditResponse::from)
                 .toList();
     }
 
     @Transactional
     public RechargeResponse recharge(RechargeRequest request) {
         User currentUser = currentUserService.currentUser();
-        if (request.usuarioId() == null || !currentUser.getId().equals(request.usuarioId())) {
+        if (!currentUser.getId().equals(request.usuarioId())) {
             throw new ReglaNegocioException("No puedes operar sobre otra cuenta");
         }
         User user = userRepository.findLockedById(request.usuarioId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
 
         Long amount = request.cantidad();
-        if (amount == null || amount < MINIMUM_RECHARGE) {
+        if (amount < MINIMUM_RECHARGE) {
             throw new ReglaNegocioException("La recarga mínima es de 50 créditos");
         }
 
@@ -77,7 +77,7 @@ public class CreditService {
             throw new ReglaNegocioException("La recarga supera el saldo máximo permitido");
         }
         user.setCredits(updatedCredits);
-        creditMovementRepository.save(new CreditMovement(
+        creditRepository.save(new Credit(
                 user,
                 total,
                 bonus > 0 ? "Recarga de prueba (incluye bono)" : "Recarga de prueba"));

@@ -10,7 +10,7 @@ import com.aivastudio.exception.RecursoNoEncontradoException;
 import com.aivastudio.exception.ReglaNegocioException;
 import com.aivastudio.model.dto.ProjectRequest;
 import com.aivastudio.model.dto.ProjectResponse;
-import com.aivastudio.model.entity.CreditMovement;
+import com.aivastudio.model.entity.Credit;
 import com.aivastudio.model.entity.Project;
 import com.aivastudio.model.entity.User;
 import com.aivastudio.repository.CreditRepository;
@@ -29,14 +29,14 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final CreditRepository creditMovementRepository;
-    private final CurrentUserService currentUserService;
+    private final UserService currentUserService;
     private final AiModelService aiModelService;
 
     public ProjectService(
             ProjectRepository projectRepository,
             UserRepository userRepository,
             CreditRepository creditMovementRepository,
-            CurrentUserService currentUserService,
+            UserService currentUserService,
             AiModelService aiModelService) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -79,7 +79,7 @@ public class ProjectService {
                 format,
                 style));
         user.setCredits(user.getCredits() - cost);
-        creditMovementRepository.save(new CreditMovement(user, -cost, "Generación · " + name));
+        creditMovementRepository.save(new Credit(user, -cost, "Generación · " + name));
         return ProjectResponse.from(project);
     }
 
