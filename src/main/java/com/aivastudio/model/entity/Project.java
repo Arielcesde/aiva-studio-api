@@ -82,6 +82,7 @@ public class Project {
     }
 
     @PrePersist
+    @SuppressWarnings("unused")
     void setCreatedAt() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now(ZoneOffset.UTC);
