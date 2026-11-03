@@ -92,14 +92,13 @@ public class ProjectService {
                 .toList();
     }
 
-    private User lockAndRequireUser(Long userId) {
-        User currentUser = currentUserService.currentUser();
-        if (userId == null || !currentUser.getId().equals(userId)) {
-            throw new ReglaNegocioException("No puedes operar sobre otra cuenta");
-        }
-        return userRepository.findLockedById(userId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+private User lockAndRequireUser(Long userId) {
+    if (userId == null) {
+        throw new ReglaNegocioException("El usuario es obligatorio");
     }
+    return userRepository.findLockedById(userId)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+}
 
     private String validateName(String name) {
         if (name == null || name.isBlank()) {

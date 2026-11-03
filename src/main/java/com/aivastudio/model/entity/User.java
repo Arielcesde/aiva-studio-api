@@ -1,7 +1,6 @@
 package com.aivastudio.model.entity;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +11,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "aiva_users")
+@Table(name = "users")
 public class User {
 
     @Id
@@ -31,8 +30,15 @@ public class User {
     @Column(nullable = false)
     private long credits;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+    }
 
     protected User() {
     }
@@ -42,13 +48,6 @@ public class User {
         this.email = email;
         this.passwordHash = passwordHash;
         this.credits = credits;
-    }
-
-    @PrePersist
-    void setCreatedAt() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now(ZoneOffset.UTC);
-        }
     }
 
     public Long getId() {
@@ -73,5 +72,13 @@ public class User {
 
     public void setCredits(long credits) {
         this.credits = credits;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

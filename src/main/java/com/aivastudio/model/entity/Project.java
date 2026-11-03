@@ -15,7 +15,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "aiva_projects")
+@Table(name = "projects")
 public class Project {
 
     @Id

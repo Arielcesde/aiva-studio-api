@@ -22,7 +22,7 @@ public class AiModelService {
                     "Prueba ideas y conceptos con un consumo de créditos menor.", "green"));
 
     private final Map<String, AiModelResponse> modelsById = models.stream()
-            .collect(java.util.stream.Collectors.toUnmodifiableMap(AiModelResponse::id, model -> model));
+            .collect(java.util.stream.Collectors.toUnmodifiableMap(model -> model.id(), model -> model));
 
     public List<AiModelResponse> list() {
         return models;

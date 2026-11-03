@@ -2,15 +2,38 @@ package com.aivastudio.model.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.aivastudio.model.entity.Credit;
 
-public record CreditResponse(Long id, String label, long amount, LocalDateTime date) {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record CreditResponse(
+        Long id,
+        String label,
+        Long amount,
+        LocalDateTime date,
+        Long usuarioId,
+        Long cantidad,
+        Long bonificacion,
+        Long totalRecargado,
+        Long creditosDisponibles) {
 
-    public static CreditResponse from(Credit movement) {
+    public static CreditResponse movimiento(Credit credit) {
         return new CreditResponse(
-                movement.getId(),
-                movement.getDescription(),
-                movement.getAmount(),
-                movement.getCreatedAt());
+                credit.getId(),
+                credit.getDescription(),
+                credit.getAmount(),
+                credit.getCreatedAt(),
+                null, null, null, null, null);
+    }
+
+    public static CreditResponse recarga(
+            Long usuarioId,
+            long cantidad,
+            long bonificacion,
+            long totalRecargado,
+            long creditosDisponibles) {
+        return new CreditResponse(
+                null, null, null, null,
+                usuarioId, cantidad, bonificacion, totalRecargado, creditosDisponibles);
     }
 }

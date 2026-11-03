@@ -10,7 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "modelos_ia")
+@Table(name = "ai_models")
 @AttributeOverride(name = "id", column = @Column(name = "id_modelo"))
 public class AiModel extends BaseEntity {
 
