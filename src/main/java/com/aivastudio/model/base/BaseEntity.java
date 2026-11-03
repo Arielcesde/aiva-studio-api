@@ -33,5 +33,19 @@ public abstract class BaseEntity {
 
     public BaseEntity(Long id) { this.id = id; }
 
-    // + getters y setters de los 3 campos (generalos con el IDE)
+    public Long getId() { return id; }
+
+    public void setId(Long id) { this.id = id; }
+
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
 }

@@ -10,22 +10,21 @@ import com.aivastudio.model.entity.User;
 import com.aivastudio.repository.UserRepository;
 
 @Service
-public class CurrentUserService {
+public class UserService {
 
     private final UserRepository userRepository;
 
-    public CurrentUserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public User requireUser(Long requestedId) {
-        User currentUser = currentUser();
-        if (requestedId == null || !currentUser.getId().equals(requestedId)) {
-            throw new ReglaNegocioException("No puedes operar sobre otra cuenta");
-        }
-        return userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+    public User requireUser(Long userId) {
+    if (userId == null) {
+        throw new ReglaNegocioException("El usuario es obligatorio");
     }
+    return userRepository.findById(userId)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
+}
 
     public User currentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

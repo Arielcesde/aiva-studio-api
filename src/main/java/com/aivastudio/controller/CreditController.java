@@ -2,7 +2,6 @@ package com.aivastudio.controller;
 
 import java.util.List;
 
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,34 +11,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.aivastudio.model.dto.CreditMovementResponse;
-import com.aivastudio.model.dto.RechargeRequest;
-import com.aivastudio.model.dto.RechargeResponse;
-import com.aivastudio.model.dto.UserResponse;
+import com.aivastudio.model.dto.CreditRechargeRequest;
+import com.aivastudio.model.dto.CreditResponse;
 import com.aivastudio.service.CreditService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/aiva/usuarios")
-public class AivaUserController {
+public class CreditController {
 
     private final CreditService creditService;
 
-    public AivaUserController(CreditService creditService) {
+    public CreditController(CreditService creditService) {
         this.creditService = creditService;
     }
 
-    @GetMapping("/{userId}")
-    public UserResponse getProfile(@PathVariable long userId) {
-        return creditService.getProfile(userId);
-    }
-
     @GetMapping("/{userId}/movimientos")
-    public List<CreditMovementResponse> listMovements(@PathVariable long userId) {
+    public List<CreditResponse> listMovements(@PathVariable long userId) {
         return creditService.listMovements(userId);
     }
 
     @PostMapping("/recargar")
-    public ResponseEntity<RechargeResponse> recharge(@Valid @RequestBody RechargeRequest request) {
+    public ResponseEntity<CreditResponse> recharge(@Valid @RequestBody CreditRechargeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(creditService.recharge(request));
     }
 }
