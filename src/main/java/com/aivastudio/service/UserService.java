@@ -19,12 +19,15 @@ public class UserService {
     }
 
     public User requireUser(Long userId) {
-    if (userId == null) {
-        throw new ReglaNegocioException("El usuario es obligatorio");
+        if (userId == null) {
+            throw new ReglaNegocioException("El usuario es obligatorio");
+        }
+        if (!currentUser().getId().equals(userId)) {
+            throw new RecursoNoEncontradoException("Usuario no encontrado");
+        }
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
     }
-    return userRepository.findById(userId)
-            .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
-}
 
     public User currentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

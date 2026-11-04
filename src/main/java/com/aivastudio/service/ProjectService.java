@@ -96,6 +96,7 @@ private User lockAndRequireUser(Long userId) {
     if (userId == null) {
         throw new ReglaNegocioException("El usuario es obligatorio");
     }
+    currentUserService.requireUser(userId);
     return userRepository.findLockedById(userId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
 }
