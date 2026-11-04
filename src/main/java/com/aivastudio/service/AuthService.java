@@ -6,7 +6,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aivastudio.exception.CredencialesInvalidasException;
 import com.aivastudio.exception.ReglaNegocioException;
+import com.aivastudio.model.dto.AuthResponse;
+import com.aivastudio.model.dto.LoginRequest;
 import com.aivastudio.model.dto.UserResponse;
 import com.aivastudio.model.entity.Credit;
 import com.aivastudio.model.entity.User;
@@ -24,17 +27,20 @@ public class AuthService {
     private final UserRepository userRepository;
     private final CreditRepository creditRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthTokenService authTokenService;
 
     public AuthService(UserRepository userRepository,
                        CreditRepository creditRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       AuthTokenService authTokenService) {
         this.userRepository = userRepository;
         this.creditRepository = creditRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authTokenService = authTokenService;
     }
 
     @Transactional
-    public UserResponse register(UserRequest request) {
+    public AuthResponse register(UserRequest request) {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         String password = request.password();
         if (!email.contains("@")) {
@@ -49,6 +55,21 @@ public class AuthService {
         User user = userRepository.save(new User(
                 request.nombre().trim(), email, passwordEncoder.encode(password), INITIAL_CREDITS));
         creditRepository.save(new Credit(user, INITIAL_CREDITS, "Créditos iniciales"));
-        return UserResponse.from(user);
+        return new AuthResponse(authTokenService.issue(user), UserResponse.from(user));
+    }
+
+    @Transactional
+    public AuthResponse login(LoginRequest request) {
+        String email = request.email().trim().toLowerCase(Locale.ROOT);
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(CredencialesInvalidasException::new);
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new CredencialesInvalidasException();
+        }
+        return new AuthResponse(authTokenService.issue(user), UserResponse.from(user));
+    }
+
+    public void logout(String token) {
+        authTokenService.revoke(token);
     }
 }

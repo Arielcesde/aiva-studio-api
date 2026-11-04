@@ -60,6 +60,7 @@ public class CreditService {
 
     @Transactional
     public CreditResponse recharge(CreditRechargeRequest request) {
+        currentUserService.requireUser(request.usuarioId());
         User user = userRepository.findLockedById(request.usuarioId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
 
