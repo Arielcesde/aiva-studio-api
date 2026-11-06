@@ -33,7 +33,7 @@ public class AiModel extends BaseEntity {
     private Boolean activo = true;
 
     @OneToMany(mappedBy = "aiModel")
-    private List<Project> projects = new ArrayList<>();
+    private final List<Project> projects = new ArrayList<>();
 
     @Column(nullable = false, unique = true, length = 50)
     private String codigo;          // slug que usa el frontend, ej. "lumina-v2"

@@ -1,5 +1,7 @@
 package com.aivastudio.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Set;
 
@@ -7,134 +9,126 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aivastudio.exception.RecursoNoEncontradoException;
-import com.aivastudio.exception.ReglaNegocioException;
+import com.aivastudio.exception.ReglaDeNegocioException;
 import com.aivastudio.model.dto.ProjectRequest;
 import com.aivastudio.model.dto.ProjectResponse;
+import com.aivastudio.model.embeddable.ConfiguracionVideo;
+import com.aivastudio.model.entity.AiModel;
 import com.aivastudio.model.entity.Credit;
 import com.aivastudio.model.entity.Project;
+import com.aivastudio.model.entity.Tag;
 import com.aivastudio.model.entity.User;
+import com.aivastudio.model.enums.EstadoProyecto;
+import com.aivastudio.model.enums.FormatoPantalla;
 import com.aivastudio.repository.CreditRepository;
 import com.aivastudio.repository.ProjectRepository;
+import com.aivastudio.repository.TagRepository;
 import com.aivastudio.repository.UserRepository;
 
 @Service
 public class ProjectService {
 
-    private static final int MAX_NAME_LENGTH = 80;
-    private static final int MAX_PROMPT_LENGTH = 1000;
-    private static final int MAX_STYLE_LENGTH = 40;
     private static final Set<Integer> SUPPORTED_DURATIONS = Set.of(5, 10, 15, 30, 45, 60);
-    private static final Set<String> SUPPORTED_FORMATS = Set.of("16:9", "9:16", "1:1");
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final CreditRepository creditMovementRepository;
     private final UserService currentUserService;
     private final AiModelService aiModelService;
+    private final TagRepository tagRepository;
 
     public ProjectService(
             ProjectRepository projectRepository,
             UserRepository userRepository,
             CreditRepository creditMovementRepository,
             UserService currentUserService,
-            AiModelService aiModelService) {
+            AiModelService aiModelService,
+            TagRepository tagRepository) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.creditMovementRepository = creditMovementRepository;
         this.currentUserService = currentUserService;
         this.aiModelService = aiModelService;
+        this.tagRepository = tagRepository;
     }
 
     @Transactional
     public ProjectResponse create(ProjectRequest request) {
-        User user = lockAndRequireUser(request.usuarioId());
-        String name = validateName(request.nombre());
-        String prompt = validatePrompt(request.prompt());
-        var model = aiModelService.find(request.modelId(), request.modeloIa());
+        User user = lockAndRequireUser(currentUserService.currentUser().getId());
+
+        AiModel aiModel = aiModelService.findActiveByCodigo(request.modelId());
         int duration = validateDuration(request.duracionSeg());
-        String format = validateFormat(request.formato());
+        String format = request.formato() == null || request.formato().isBlank()
+                ? "16:9"
+                : request.formato();
         String style = request.estilo() == null || request.estilo().isBlank()
                 ? "Cinematográfico"
                 : request.estilo().trim();
-        if (style.length() > MAX_STYLE_LENGTH) {
-            throw new ReglaNegocioException("El estilo no puede superar 40 caracteres");
-        }
 
-        long cost = Math.multiplyExact((long) model.costoPorSegundo(), duration);
-        if (request.costoCreditos() != null && request.costoCreditos() != cost) {
-            throw new ReglaNegocioException("El costo enviado no coincide con el costo calculado por el servidor");
-        }
+        long cost = calculateCost(aiModel, duration);
         if (user.getCredits() < cost) {
-            throw new ReglaNegocioException("Créditos insuficientes para crear este proyecto");
+            throw new ReglaDeNegocioException("Créditos insuficientes para crear este proyecto");
         }
 
-        Project project = projectRepository.save(new Project(
+        ConfiguracionVideo configuracion = new ConfiguracionVideo(
+                style, FormatoPantalla.fromValor(format), "1080p", duration);
+
+        Project project = new Project(
                 user,
-                name,
-                prompt,
-                model.id(),
-                model.nombre(),
+                aiModel,
+                request.nombre().trim(),
+                request.prompt().trim(),
                 cost,
-                duration,
-                format,
-                style));
+                configuracion);
+
+        if (request.tags() != null) {
+            for (String nombre : request.tags()) {
+                String limpio = nombre.trim();
+                Tag tag = tagRepository.findByNombreIgnoreCase(limpio)
+                        .orElseGet(() -> tagRepository.save(new Tag(limpio)));
+                project.addTag(tag);
+            }
+        }
+
+        project = projectRepository.save(project);
         user.setCredits(user.getCredits() - cost);
-        creditMovementRepository.save(new Credit(user, -cost, "Generación · " + name));
+        creditMovementRepository.save(new Credit(user, -cost, "Generación · " + project.getName()));
         return ProjectResponse.from(project);
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectResponse> listForUser(Long userId) {
+    public List<ProjectResponse> listForUser(Long userId, EstadoProyecto estado) {
         currentUserService.requireUser(userId);
-        return projectRepository.findAllByUser_IdOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(ProjectResponse::from)
-                .toList();
+        List<Project> projects = (estado == null)
+                ? projectRepository.findAllByUser_IdOrderByFechaCreacionDesc(userId)
+                : projectRepository.findAllByUser_IdAndEstadoOrderByFechaCreacionDesc(userId, estado);
+        return projects.stream().map(ProjectResponse::from).toList();
     }
 
-private User lockAndRequireUser(Long userId) {
-    if (userId == null) {
-        throw new ReglaNegocioException("El usuario es obligatorio");
-    }
-    currentUserService.requireUser(userId);
-    return userRepository.findLockedById(userId)
-            .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
-}
-
-    private String validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new ReglaNegocioException("El nombre del proyecto es obligatorio");
+    private User lockAndRequireUser(Long userId) {
+        if (userId == null) {
+            throw new ReglaDeNegocioException("El usuario es obligatorio");
         }
-        String normalized = name.trim();
-        if (normalized.length() > MAX_NAME_LENGTH) {
-            throw new ReglaNegocioException("El nombre del proyecto no puede superar 80 caracteres");
-        }
-        return normalized;
+        currentUserService.requireUser(userId);
+        return userRepository.findLockedById(userId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
     }
 
-    private String validatePrompt(String prompt) {
-        if (prompt == null || prompt.isBlank()) {
-            throw new ReglaNegocioException("La descripción del proyecto es obligatoria");
+    private long calculateCost(AiModel aiModel, int duration) {
+        try {
+            return aiModel.getCostoPorSegundo()
+                    .multiply(BigDecimal.valueOf(duration))
+                    .setScale(0, RoundingMode.CEILING)
+                    .longValueExact();
+        } catch (ArithmeticException ex) {
+            throw new ReglaDeNegocioException("El costo del proyecto supera el máximo permitido");
         }
-        String normalized = prompt.trim();
-        if (normalized.length() > MAX_PROMPT_LENGTH) {
-            throw new ReglaNegocioException("El prompt no puede superar 1000 caracteres");
-        }
-        return normalized;
     }
 
     private int validateDuration(Integer duration) {
         if (duration == null || !SUPPORTED_DURATIONS.contains(duration)) {
-            throw new ReglaNegocioException("La duración debe ser 5, 10, 15, 30, 45 o 60 segundos");
+            throw new ReglaDeNegocioException("La duración debe ser 5, 10, 15, 30, 45 o 60 segundos");
         }
         return duration;
-    }
-
-    private String validateFormat(String format) {
-        String normalized = format == null || format.isBlank() ? "16:9" : format.trim();
-        if (!SUPPORTED_FORMATS.contains(normalized)) {
-            throw new ReglaNegocioException("El formato debe ser 16:9, 9:16 o 1:1");
-        }
-        return normalized;
     }
 }

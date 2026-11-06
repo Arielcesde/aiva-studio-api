@@ -18,7 +18,7 @@ public class Tag extends BaseEntity {
     private String nombre;
 
     @ManyToMany(mappedBy = "tags")
-    private Set<Project> projects = new HashSet<>();
+    private final Set<Project> projects = new HashSet<>();
 
     public Tag() {}
 

@@ -52,7 +52,7 @@ public class Project extends BaseEntity {
             name = "project_tags",
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    private Set<Tag> tags = new HashSet<>();
+    private final Set<Tag> tags = new HashSet<>();
 
     protected Project() {
     }

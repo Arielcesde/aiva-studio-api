@@ -38,7 +38,7 @@ public class User extends BaseEntity {
     private Subscription subscription;
 
     @OneToMany(mappedBy = "user")
-    private List<Project> projects = new ArrayList<>();
+    private final List<Project> projects = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
