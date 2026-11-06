@@ -1,22 +1,25 @@
 package com.aivastudio.model.entity;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.aivastudio.model.base.BaseEntity;
+
+import com.aivastudio.model.enums.RolUsuario;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "users")
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class User extends BaseEntity {
 
     @Column(nullable = false, length = 80)
     private String name;
@@ -30,15 +33,16 @@ public class User {
     @Column(nullable = false)
     private long credits;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "subscription_id")
+    private Subscription subscription;
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-    }
+    @OneToMany(mappedBy = "user")
+    private List<Project> projects = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RolUsuario rol = RolUsuario.CREATOR;
 
     protected User() {
     }
@@ -48,10 +52,6 @@ public class User {
         this.email = email;
         this.passwordHash = passwordHash;
         this.credits = credits;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getName() {
@@ -74,11 +74,23 @@ public class User {
         this.credits = credits;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public Subscription getSubscription() {
+        return subscription;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setSubscription(Subscription subscription) {
+        this.subscription = subscription;
+    }
+
+    public List<Project> getProjects() {
+        return projects;
+    }
+
+    public RolUsuario getRol() {
+        return rol;
+    }
+
+    public void setRol(RolUsuario rol) {
+        this.rol = rol;
     }
 }
