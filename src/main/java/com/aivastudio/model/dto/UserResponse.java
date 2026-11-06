@@ -11,12 +11,15 @@ public record UserResponse(
         String rol) {
 
     public static UserResponse from(User user) {
+        boolean suscripcionActiva = user.getSubscription() != null
+                && user.getSubscription().isActiva();
         return new UserResponse(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getCredits(),
-                true,
-                "CREATOR");
+                suscripcionActiva,
+                user.getRol().name());
     }
 }
+

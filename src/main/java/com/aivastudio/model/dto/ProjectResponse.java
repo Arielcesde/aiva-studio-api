@@ -1,8 +1,11 @@
 package com.aivastudio.model.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.aivastudio.model.embeddable.ConfiguracionVideo;
 import com.aivastudio.model.entity.Project;
+import com.aivastudio.model.entity.Tag;
 
 public record ProjectResponse(
         Long id,
@@ -17,22 +20,25 @@ public record ProjectResponse(
         String formato,
         String estilo,
         String estado,
-        LocalDateTime fechaCreacion) {
+        LocalDateTime fechaCreacion,
+        List<String> tags) {
 
     public static ProjectResponse from(Project project) {
+        ConfiguracionVideo config = project.getConfiguracion();
         return new ProjectResponse(
                 project.getId(),
                 project.getUser().getId(),
                 project.getName(),
                 project.getPrompt(),
-                project.getModelId(),
-                project.getModelName(),
+                project.getAiModel().getCodigo(),
+                project.getAiModel().getNombre(),
                 project.getUser().getCredits(),
                 project.getCreditCost(),
-                project.getDurationSeconds(),
-                project.getFormat(),
-                project.getStyle(),
-                project.getStatus(),
-                project.getCreatedAt());
+                config.getDuracionSegundos(),
+                config.getFormatoPantalla().getValor(),
+                config.getEstiloVisual(),
+                project.getEstado().name(),
+                project.getFechaCreacion(),
+                project.getTags().stream().map(Tag::getNombre).sorted().toList());
     }
 }
