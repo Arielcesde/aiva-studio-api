@@ -33,5 +33,15 @@ public class ConfiguracionVideo {
         this.duracionSegundos = duracionSegundos;
     }
 
-    // + getters y setters
+    public String getEstiloVisual() { return estiloVisual; }
+    public void setEstiloVisual(String estiloVisual) { this.estiloVisual = estiloVisual; }
+
+    public FormatoPantalla getFormatoPantalla() { return formatoPantalla; }
+    public void setFormatoPantalla(FormatoPantalla formatoPantalla) { this.formatoPantalla = formatoPantalla; }
+
+    public String getResolucion() { return resolucion; }
+    public void setResolucion(String resolucion) { this.resolucion = resolucion; }
+
+    public Integer getDuracionSegundos() { return duracionSegundos; }
+    public void setDuracionSegundos(Integer duracionSegundos) { this.duracionSegundos = duracionSegundos; }
 }

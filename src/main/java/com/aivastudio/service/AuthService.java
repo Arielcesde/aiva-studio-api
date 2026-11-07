@@ -7,20 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aivastudio.exception.CredencialesInvalidasException;
-import com.aivastudio.exception.ReglaNegocioException;
+import com.aivastudio.exception.ReglaDeNegocioException;
 import com.aivastudio.model.dto.AuthResponse;
 import com.aivastudio.model.dto.LoginRequest;
+import com.aivastudio.model.dto.UserRequest;
 import com.aivastudio.model.dto.UserResponse;
 import com.aivastudio.model.entity.Credit;
+import com.aivastudio.model.entity.Subscription;
 import com.aivastudio.model.entity.User;
 import com.aivastudio.repository.CreditRepository;
 import com.aivastudio.repository.UserRepository;
 
 @Service
 public class AuthService {
-
-    public record UserRequest(String nombre, String email, String password) {
-    }
 
     private static final long INITIAL_CREDITS = 100;
 
@@ -43,17 +42,12 @@ public class AuthService {
     public AuthResponse register(UserRequest request) {
         String email = request.email().trim().toLowerCase(Locale.ROOT);
         String password = request.password();
-        if (!email.contains("@")) {
-            throw new ReglaNegocioException("El correo electrónico no es válido");
-        }
-        if (password.length() < 6 || password.length() > 72) {
-            throw new ReglaNegocioException("La contraseña debe tener entre 6 y 72 caracteres");
-        }
         if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new ReglaNegocioException("Ya existe una cuenta con ese correo electrónico");
+            throw new ReglaDeNegocioException("Ya existe una cuenta con ese correo electrónico");
         }
-        User user = userRepository.save(new User(
-                request.nombre().trim(), email, passwordEncoder.encode(password), INITIAL_CREDITS));
+        User user = new User(request.nombre().trim(), email, passwordEncoder.encode(password), INITIAL_CREDITS);
+        user.setSubscription(new Subscription("GRATUITO", true));
+        user = userRepository.save(user);
         creditRepository.save(new Credit(user, INITIAL_CREDITS, "Créditos iniciales"));
         return new AuthResponse(authTokenService.issue(user), UserResponse.from(user));
     }

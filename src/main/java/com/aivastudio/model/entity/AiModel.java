@@ -1,12 +1,15 @@
 package com.aivastudio.model.entity;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.aivastudio.model.base.BaseEntity;
 
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -29,17 +32,36 @@ public class AiModel extends BaseEntity {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @OneToMany(mappedBy = "aiModel")
+    private final List<Project> projects = new ArrayList<>();
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String codigo;          // slug que usa el frontend, ej. "lumina-v2"
+
+    @Column(nullable = false, length = 50)
+    private String categoria;
+
+    @Column(nullable = false, length = 300)
+    private String descripcion;
+
+    @Column(nullable = false, length = 20)
+    private String color;
+
+    public List<Project> getProjects() { return projects; }
+
     public AiModel() {
     }
 
-    public AiModel(Long id, String nombre, String proveedor, String version,
-            BigDecimal costoPorSegundo, Boolean activo) {
-        super(id);
+    public AiModel(String codigo, String nombre, String proveedor, String version,
+                   BigDecimal costoPorSegundo, String categoria, String descripcion, String color) {
+        this.codigo = codigo;
         this.nombre = nombre;
         this.proveedor = proveedor;
         this.version = version;
         this.costoPorSegundo = costoPorSegundo;
-        this.activo = (activo != null) ? activo : Boolean.TRUE;
+        this.categoria = categoria;
+        this.descripcion = descripcion;
+        this.color = color;
     }
     // + getters y setters
 
@@ -82,4 +104,20 @@ public class AiModel extends BaseEntity {
     public void setActivo(Boolean activo) {
         this.activo = activo;
     }
+
+    public String getCodigo() {return codigo; }
+
+    public void setCodigo(String codigo) { this.codigo = codigo; }
+
+    public String getCategoria() { return categoria; }
+
+    public void setCategoria(String categoria) { this.categoria = categoria; }
+
+    public String getDescripcion() { return descripcion; }
+
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+
+    public String getColor() { return color; }
+
+    public void setColor(String color) { this.color = color; }
 }

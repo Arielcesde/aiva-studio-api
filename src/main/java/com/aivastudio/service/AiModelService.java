@@ -1,44 +1,62 @@
 package com.aivastudio.service;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.aivastudio.exception.ReglaNegocioException;
+import com.aivastudio.exception.RecursoNoEncontradoException;
+import com.aivastudio.exception.ReglaDeNegocioException;
+import com.aivastudio.model.dto.AiModelRequest;
 import com.aivastudio.model.dto.AiModelResponse;
+import com.aivastudio.model.entity.AiModel;
+import com.aivastudio.repository.AiModelRepository;
 
 @Service
 public class AiModelService {
 
-    private final List<AiModelResponse> models = List.of(
-            new AiModelResponse("lumina-v2", "Lumina Video Pro v2", 2, "Equilibrado",
-                    "Una opción versátil para anuncios, historias y contenido diario.", "coral"),
-            new AiModelResponse("sora-api", "Sora API Direct", 5, "Alta fidelidad",
-                    "Escenas detalladas y narrativas con acabado cinematográfico.", "blue"),
-            new AiModelResponse("runway-gen3", "Runway Gen-3 Alpha", 4, "Creativo",
-                    "Ideal para explorar estilos, movimiento y conceptos visuales.", "gold"),
-            new AiModelResponse("svd-xl", "Stable Video Diffusion XL", 1, "Ligero",
-                    "Prueba ideas y conceptos con un consumo de créditos menor.", "green"));
+    private final AiModelRepository aiModelRepository;
 
-    private final Map<String, AiModelResponse> modelsById = models.stream()
-            .collect(java.util.stream.Collectors.toUnmodifiableMap(model -> model.id(), model -> model));
-
-    public List<AiModelResponse> list() {
-        return models;
+    public AiModelService(AiModelRepository aiModelRepository) {
+        this.aiModelRepository = aiModelRepository;
     }
 
-    public AiModelResponse find(String id, String name) {
-        AiModelResponse model = id == null ? null : modelsById.get(id);
-        if (model == null && name != null) {
-            model = models.stream()
-                    .filter(candidate -> candidate.nombre().equalsIgnoreCase(name.trim()))
-                    .findFirst()
-                    .orElse(null);
+    @Transactional(readOnly = true)
+    public List<AiModelResponse> list() {
+        return aiModelRepository.findByActivoTrue()
+                .stream()
+                .map(AiModelResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AiModel findActiveByCodigo(String codigo) {
+        return aiModelRepository.findByCodigoAndActivoTrue(codigo)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "El modelo de IA '" + codigo + "' no existe o no está disponible"));
+    }
+
+    @Transactional
+    public AiModelResponse create(AiModelRequest request) {
+        if (aiModelRepository.existsByCodigoIgnoreCase(request.codigo())) {
+            throw new ReglaDeNegocioException("Ya existe un modelo con el código " + request.codigo());
         }
-        if (model == null) {
-            throw new ReglaNegocioException("Selecciona un modelo de IA válido");
+        if (aiModelRepository.existsByNombreIgnoreCaseAndVersionIgnoreCase(
+                request.nombre(), request.version())) {
+            throw new ReglaDeNegocioException("Ya existe ese modelo en esa versión");
         }
-        return model;
+        AiModel model = new AiModel(
+                request.codigo().trim().toLowerCase(),
+                request.nombre().trim(),
+                request.proveedor().trim(),
+                request.version().trim(),
+                request.costoPorSegundo(),
+                request.categoria().trim(),
+                request.descripcion().trim(),
+                request.color().trim());
+        if (request.activo() != null) {
+            model.setActivo(request.activo());
+        }
+        return AiModelResponse.from(aiModelRepository.save(model));
     }
 }

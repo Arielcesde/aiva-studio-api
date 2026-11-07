@@ -6,14 +6,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aivastudio.exception.RecursoNoEncontradoException;
-import com.aivastudio.exception.ReglaNegocioException;
+import com.aivastudio.exception.ReglaDeNegocioException;
+import com.aivastudio.model.dto.CreditMovementResponse;
 import com.aivastudio.model.dto.CreditRechargeRequest;
-import com.aivastudio.model.dto.CreditResponse;
+import com.aivastudio.model.dto.CreditRechargeResponse;
 import com.aivastudio.model.dto.UserResponse;
 import com.aivastudio.model.entity.Credit;
 import com.aivastudio.model.entity.User;
 import com.aivastudio.repository.CreditRepository;
 import com.aivastudio.repository.UserRepository;
+
 
 @Service
 public class CreditService {
@@ -41,32 +43,23 @@ public class CreditService {
     }
 
     @Transactional(readOnly = true)
-    public List<CreditResponse> listMovements(long userId) {
+    public List<CreditMovementResponse> listMovements(long userId) {
         currentUserService.requireUser(userId);
-        return creditRepository.findAllByUser_IdOrderByCreatedAtDesc(userId)
+        return creditRepository.findAllByUser_IdOrderByFechaCreacionDesc(userId)
                 .stream()
-            .map(credit -> new CreditResponse(
-                credit.getId(),
-                credit.getDescription(),
-                credit.getAmount(),
-                credit.getCreatedAt(),
-                credit.getUser().getId(),
-                null,
-                null,
-                null,
-                null))
+                .map(CreditMovementResponse::from)
                 .toList();
     }
 
     @Transactional
-    public CreditResponse recharge(CreditRechargeRequest request) {
-        currentUserService.requireUser(request.usuarioId());
-        User user = userRepository.findLockedById(request.usuarioId())
+    public CreditRechargeResponse recharge(long userId, CreditRechargeRequest request) {
+        currentUserService.requireUser(userId);
+        User user = userRepository.findLockedById(userId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
 
         Long amount = request.cantidad();
         if (amount < MINIMUM_RECHARGE) {
-            throw new ReglaNegocioException("La recarga mínima es de 50 créditos");
+            throw new ReglaDeNegocioException("La recarga mínima es de 50 créditos");
         }
 
         long bonus;
@@ -79,7 +72,7 @@ public class CreditService {
             total = Math.addExact(amount, bonus);
             updatedCredits = Math.addExact(user.getCredits(), total);
         } catch (ArithmeticException ex) {
-            throw new ReglaNegocioException("La recarga supera el saldo máximo permitido");
+            throw new ReglaDeNegocioException("La recarga supera el saldo máximo permitido");
         }
         user.setCredits(updatedCredits);
         Credit credit = creditRepository.save(new Credit(
@@ -87,15 +80,21 @@ public class CreditService {
                 total,
                 bonus > 0 ? "Recarga de prueba (incluye bono)" : "Recarga de prueba"));
 
-        return new CreditResponse(
-            credit.getId(),
-            credit.getDescription(),
-            credit.getAmount(),
-            credit.getCreatedAt(),
-            user.getId(),
-            amount,
-            bonus,
-            total,
-            updatedCredits);
+        return new CreditRechargeResponse(
+                credit.getId(),
+                credit.getDescription(),
+                credit.getAmount(),
+                credit.getFechaCreacion(),
+                user.getId(),
+                amount,
+                bonus,
+                total,
+                updatedCredits);
+    }
+
+    @Transactional(readOnly = true)
+    public long totalCredited(long userId) {
+        currentUserService.requireUser(userId);
+        return creditRepository.totalAcreditadoPorUsuario(userId);
     }
 }

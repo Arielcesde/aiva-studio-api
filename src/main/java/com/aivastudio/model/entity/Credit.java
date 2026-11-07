@@ -1,26 +1,17 @@
 package com.aivastudio.model.entity;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import com.aivastudio.model.base.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "credit")
-public class Credit {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Table(name = "credits")
+public class Credit extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -32,9 +23,6 @@ public class Credit {
     @Column(nullable = false, length = 160)
     private String description;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     protected Credit() {
     }
 
@@ -43,19 +31,6 @@ public class Credit {
         this.amount = amount;
         this.description = description;
     }
-
-    @PrePersist
-    @SuppressWarnings("unused") // Invoked by JPA before persistence.
-    void setCreatedAt() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now(ZoneOffset.UTC);
-        }
-    }
-
-    public Long getId() {
-        return id;
-    }
-
     public User getUser() {
         return user;
     }
@@ -66,9 +41,5 @@ public class Credit {
 
     public String getDescription() {
         return description;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 }

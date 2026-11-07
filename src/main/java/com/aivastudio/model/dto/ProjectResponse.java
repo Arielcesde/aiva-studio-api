@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.aivastudio.model.embeddable.ConfiguracionVideo;
 import com.aivastudio.model.entity.Project;
-import com.aivastudio.model.entity.Tag;
 
 public record ProjectResponse(
         Long id,
@@ -39,6 +38,6 @@ public record ProjectResponse(
                 config.getEstiloVisual(),
                 project.getEstado().name(),
                 project.getFechaCreacion(),
-                project.getTags().stream().map(Tag::getNombre).sorted().toList());
+                project.getTags().stream().map(tag -> tag.getNombre()).sorted().toList());
     }
 }
