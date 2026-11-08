@@ -1,16 +1,14 @@
-FROM maven:3.9.16-eclipse-temurin-17 AS build
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 
 WORKDIR /workspace
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-RUN chmod +x mvnw
+COPY pom.xml ./
+RUN mvn dependency:go-offline -B
 COPY src/ src/
-RUN ./mvnw -B clean package -DskipTests
+RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
-COPY --from=build /workspace/target/aiva-studio-api-0.0.1-SNAPSHOT.jar app.jar
-USER 10001:10001
+COPY --from=build /workspace/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
