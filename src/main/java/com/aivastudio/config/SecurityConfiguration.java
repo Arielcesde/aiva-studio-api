@@ -41,7 +41,8 @@ public class SecurityConfiguration {
                             "{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Inicia sesión para continuar\"}");
                 }))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/api/users", "/api/sessions").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users", "/api/sessions",
+                            "/api/password-resets", "/api/password-resets/confirm").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/scalar", "/scalar/**").permitAll()

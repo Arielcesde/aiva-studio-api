@@ -105,6 +105,14 @@ public class ProjectService {
         return projects.stream().map(ProjectResponse::from).toList();
     }
 
+    @Transactional
+    public void delete(long projectId){
+        long userId = currentUserService.currentUser().getId();
+        Project project = projectRepository.findByIdAndUser_Id(projectId, userId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
+        projectRepository.delete(project);
+    }
+
     private User lockAndRequireUser(Long userId) {
         if (userId == null) {
             throw new ReglaDeNegocioException("El usuario es obligatorio");
