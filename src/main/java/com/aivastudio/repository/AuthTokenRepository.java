@@ -20,4 +20,9 @@ public interface AuthTokenRepository extends JpaRepository<AuthToken, Long> {
     @Query("update AuthToken token set token.revokedAt = :revokedAt "
             + "where token.tokenHash = :tokenHash and token.revokedAt is null")
     int revokeByTokenHash(@Param("tokenHash") String tokenHash, @Param("revokedAt") Instant revokedAt);
+
+    @Modifying
+    @Query("update AuthToken token set token.revokedAt = :now "
+            + "where token.user.id = :userId and token.revokedAt is null")
+    int revokeAllByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 }

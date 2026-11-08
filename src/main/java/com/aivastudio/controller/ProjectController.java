@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,5 +60,18 @@ public class ProjectController {
             @PathVariable Long userId,
             @RequestParam(required = false) EstadoProyecto estado) {
         return projectService.listForUser(userId, estado);
+    }
+
+        @DeleteMapping("/projects/{projectId}")
+    @Operation(summary = "Eliminar un proyecto del usuario autenticado",
+            description = "Funciona en cualquier estado. Los créditos usados no se devuelven.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Proyecto eliminado"),
+            @ApiResponse(responseCode = "401", description = "Token ausente o inválido"),
+            @ApiResponse(responseCode = "404", description = "Proyecto no encontrado")
+    })
+    public ResponseEntity<Void> delete(@PathVariable Long projectId) {
+        projectService.delete(projectId);
+        return ResponseEntity.noContent().build();
     }
 }
